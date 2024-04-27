@@ -5,7 +5,9 @@ import io
 import os
 from pathlib import Path
 from vision_caption_infer import create_vision_gpt_model
-
+from utils import assess_image_quality
+import numpy as np
+import cv2
 app = FastAPI()
 
 # Define a global caption generator instance
@@ -25,7 +27,7 @@ caption_genrator = CaptionGenerator(model_name=MODEL_NAME, model_path=MODEL_PATH
 
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {"result": "you are root"}
 
 
 # Endpoint to receive an image file and perform inference
@@ -35,23 +37,14 @@ async def predict_image(ktp_image: UploadFile = File(...)):
         # Read the uploaded image file
         contents = await ktp_image.read()
         img = Image.open(io.BytesIO(contents)).convert("RGB")
-        
-        # Save the image if necessary (for debugging or other reasons)
-        path = Path(os.getcwd())/"test.png"
-        img.save(path)
-        
-        # Perform model inference using the global caption_generator
-        prediction = caption_genrator.get_caption(img)
+        caption = caption_genrator.get_caption(img)
         #test
         result = {
             "Result": {
-                "results": prediction
+                "results": caption
             }
         }
-        
-        # result = {
-        #     "prediction": prediction,
-        # }
+
         return JSONResponse(content=result)
 
     except Exception as e:
