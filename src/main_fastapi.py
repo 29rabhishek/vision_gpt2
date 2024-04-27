@@ -37,7 +37,7 @@ async def predict_image(ktp_image: UploadFile = File(...)):
         # Read the uploaded image file
         contents = await ktp_image.read()
         pil_image = Image.open(io.BytesIO(contents)).convert("RGB")
-
+        # image quality assessment
         gray_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2GRAY)
         norm_q_score = cv2.Laplacian(gray_image, cv2.CV_64F).var()  # Example quality assessment
 

@@ -63,12 +63,14 @@ if __name__ == "__main__":
         model_name = MODEL_NAME,
         model_path = MODEL_PATH
     )
+    # test infer for one image
     infer_image = False
     if infer_image:
         img_path = "/media/arnav/MEDIA/Abhishek/vision_gpt2/VizWiz_test_00000313.jpg"
         image = Image.open(img_path).convert('RGB')
         prediction = caption_genrator.get_caption(image)
-
+        
+    # test infer for file
     infer_on_file = True
     if infer_on_file:
         img_dir_pth = "/media/arnav/MEDIA/Abhishek/vision_gpt2/data/ImageSpeak/images"

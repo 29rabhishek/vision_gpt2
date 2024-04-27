@@ -51,6 +51,6 @@ if __name__ == "__main__":
     # print(result_df.head())
     # print(result_df.shape)
     ##############################
-    # WARNING : CHANGE THE FILE NAME ACCORDING TO YOURSELF
+    # WARNING : CHANGE THE FILE NAME ACCORDING TO DATE
     ###################################
     result_df.to_csv("output_csv/VisionGPT_26_output_score.csv", sep = "|", index =False)
