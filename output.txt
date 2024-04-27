@@ -1,0 +1,41 @@
+Data source import complete.
+143023 15892
+tensor([   64,  1641, 17313, 21639,   319, 10017,  4831,   764, 50256, 50256,
+        50256, 50256, 50256, 50256, 50256, 50256, 50256, 50256, 50256])
+tensor([ 1641, 17313, 21639,   319, 10017,  4831,   764, 50256,  -100,  -100,
+         -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100])
+total_frozen_params=210236928
+trainable parameters: 28366848
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+  train_loss train_perplexity  val_loss val_perplexity
+0   5.752392        314.94313  3.932773      51.048316
+saving best model...
+unfreezing GPT2 entirely...
+  train_loss train_perplexity  val_loss val_perplexity
+1   2.995664         19.99863  2.589095      13.317718
+saving best model...
+total_frozen_params=0
+  train_loss train_perplexity  val_loss val_perplexity
+2   2.542224        12.707896  2.363417      10.627207
+saving best model...
+  train_loss train_perplexity  val_loss val_perplexity
+3   2.268978         9.669512  2.248517       9.473675
+saving best model...
+  train_loss train_perplexity  val_loss val_perplexity
+4   2.111961         8.264429  2.228588       9.286742
+saving best model...
