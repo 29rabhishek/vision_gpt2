@@ -36,8 +36,23 @@ async def predict_image(ktp_image: UploadFile = File(...)):
     try:
         # Read the uploaded image file
         contents = await ktp_image.read()
-        img = Image.open(io.BytesIO(contents)).convert("RGB")
-        caption = caption_genrator.get_caption(img)
+        pil_image = Image.open(io.BytesIO(contents)).convert("RGB")
+
+        gray_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2GRAY)
+        norm_q_score = cv2.Laplacian(gray_image, cv2.CV_64F).var()  # Example quality assessment
+
+        print(norm_q_score)
+
+        # Save the image if necessary (for debugging or other reasons)
+        # path = Path(os.getcwd())/"test.png"
+        # pil_image.save(path)
+
+        if norm_q_score < 0.6:
+            caption = "Image is too blurry"
+        else:
+            caption = caption_genrator.get_caption(pil_image)
+
+
         #test
         result = {
             "Result": {
