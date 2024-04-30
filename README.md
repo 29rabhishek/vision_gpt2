@@ -10,8 +10,7 @@ Vision GPT2 is an image captioning model based on the GPT-2 architecture. This p
   - [Testing the Model](#testing-the-model)
   - [Running the API Server](#running-the-api-server)
   - [Evaluating the Model](#evaluating-the-model)
-- [Contributing](#contributing)
-- [License](#license)
+- [Contributors](#contributing)
 
 ## Project Structure
 
@@ -31,4 +30,25 @@ Vision GPT2 is an image captioning model based on the GPT-2 architecture. This p
 
 ## Installation
 
-To install the required dependencies for running the scripts
+To install the required dependencies for running the scripts **environment.yml**
+## Usage
+### Training a model
+run python **train.py**
+
+### Testing a model
+run python **test.py** set model path and model name inside the script
+
+### Running the API Server
+ run `python -m uvicorn run_api:app --host 127.0.0.1 --port 8000 --reload`
+
+### Evaluating the Model
+run python **metrics.py** in this file give the path of the file which you want to evalute
+
+
+## Contributors
+
+- **Abhishek**
+- **Rohit**
+- **Avinash**
+- **Parul**
+- **Arya**
