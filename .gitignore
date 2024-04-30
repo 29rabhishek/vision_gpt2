@@ -7,3 +7,4 @@ __pycache__/
 file/
 plots/
 src/vis.py
+src/infer_2.py
