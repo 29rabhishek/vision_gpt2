@@ -7,10 +7,88 @@ Original file is located at
     https://colab.research.google.com/#fileId=https%3A//storage.googleapis.com/kaggle-colab-exported-notebooks/visiongpt2-image-captioning-pytorch-7508e6b9-af20-45e3-a1ee-8b3bd75ba07c.ipynb%3FX-Goog-Algorithm%3DGOOG4-RSA-SHA256%26X-Goog-Credential%3Dgcp-kaggle-com%2540kaggle-161607.iam.gserviceaccount.com/20240424/auto/storage/goog4_request%26X-Goog-Date%3D20240424T091452Z%26X-Goog-Expires%3D259200%26X-Goog-SignedHeaders%3Dhost%26X-Goog-Signature%3D0d1ba50e7d47795d7aeeb7304e9e8889cb9d1a4205459911980a0e53237af6ac9e968bb1554cbc4d131118d07a1011e32318956d1eef6dffbd0d01a234d7b6c26e17b15c22ff82909ef906689cae5805e81013e8f2c74ff6e783bfa83ff137166011113e580660bab07f1dd647aa94df84a1bac15f3c0096ed9dbc116fd1d13949bdcc3ede44a0a78fea7d5e342db68b87d773f4d56b98a46ddd9b3877cce6487b39a1e4d808bfe5cd2a108f81c5654f9fa7d4744dac8cb59804e017c9abc3cee08b1ccd4997f0aa0da6ff49494f5e97d71454bceac9f207eee6d39fbcfe3b30d14c2efbef8281581432848fcf90309c6ade1f666b93e42c8e33337d939ab25f
 """
 
+# IMPORTANT: RUN THIS CELL IN ORDER TO IMPORT YOUR KAGGLE DATA SOURCES
+# TO THE CORRECT LOCATION (/kaggle/input) IN YOUR NOTEBOOK,
+# THEN FEEL FREE TO DELETE THIS CELL.
+# NOTE: THIS NOTEBOOK ENVIRONMENT DIFFERS FROM KAGGLE'S PYTHON
+# ENVIRONMENT SO THERE MAY BE MISSING LIBRARIES USED BY YOUR
+# NOTEBOOK.
+
 import os
+import sys
+from tempfile import NamedTemporaryFile
+from urllib.request import urlopen
+from urllib.parse import unquote, urlparse
+from urllib.error import HTTPError
+from zipfile import ZipFile
+import tarfile
+import shutil
+os.environ["CUDA_VISIBLE_DEVICES"] = "4"
+# CHUNK_SIZE = 40960
+# DATA_SOURCE_MAPPING = 'flickr8k:https%3A%2F%2Fstorage.googleapis.com%2Fkaggle-data-sets%2F623289%2F1111676%2Fbundle%2Farchive.zip%3FX-Goog-Algorithm%3DGOOG4-RSA-SHA256%26X-Goog-Credential%3Dgcp-kaggle-com%2540kaggle-161607.iam.gserviceaccount.com%252F20240424%252Fauto%252Fstorage%252Fgoog4_request%26X-Goog-Date%3D20240424T091451Z%26X-Goog-Expires%3D259200%26X-Goog-SignedHeaders%3Dhost%26X-Goog-Signature%3Dc1cfd54ca4568a253a692ebc561d5d8859d876e2d2d0e32cd2cdc8e7fb1811e1a52851db60f592fe9a6db0d77809c5fb40c6582bb4076a4ea49de04c58f15dc9eca7c315d941984f32292e2b90b834128dc6d58ab6dfe5534107dd4cd1b6ea6c38f99688dc9ce4c3efc00a2f8f559db1007433a11d59e3315d39a8020d4d2743494ea5d988e00c527e12df13cd68ec33f1de4665a66fca98d397da55dfc9459582e650b526751215da0629433b067539c3697ddd0e7dfd345d623224f81b84f413f28342511d5788f143bdbd3cd7f3cd25b2e08223123aa07471f50a1d32566369886def5e869ac71b073d0e6fc3867e9a724c6f1453c35ca43c7e395206bb4a,coco-2017-dataset:https%3A%2F%2Fstorage.googleapis.com%2Fkaggle-data-sets%2F857191%2F1462296%2Fbundle%2Farchive.zip%3FX-Goog-Algorithm%3DGOOG4-RSA-SHA256%26X-Goog-Credential%3Dgcp-kaggle-com%2540kaggle-161607.iam.gserviceaccount.com%252F20240424%252Fauto%252Fstorage%252Fgoog4_request%26X-Goog-Date%3D20240424T091451Z%26X-Goog-Expires%3D259200%26X-Goog-SignedHeaders%3Dhost%26X-Goog-Signature%3D980ae6f1b524a022703b2f3b8bbbaea9b5d2ec58f50aa9f0288e15a1b6a84d0510663453c71d9f6c52c8e1bf23cb89d6958d8fa3adecd046644c59d23338e92cb5313f33575b17564762a3c6ae8364398bf40c6d39ec75e948b84c27302d2882725b42316f6f5d30b87f38f12ebc67e50ebce28e0735004836aa7622fcc01aa7d8ce21362f03fc31b37e0bb673a1d883836accd2bb2a73c31e982d0fd1f61fdec01de1b0b5e5d853400855a55c4a2e000b726bfe0344d909e9563410ba9585e52ba96446c918797b1e5fc6cd5a500492f120414433433c9b5a0afbb9556bd23516701f85e07c995280eef83864791ee9bf12b6f070b8b3f1340ba6040f5969d6,flickr30k:https%3A%2F%2Fstorage.googleapis.com%2Fkaggle-data-sets%2F2808179%2F4845244%2Fbundle%2Farchive.zip%3FX-Goog-Algorithm%3DGOOG4-RSA-SHA256%26X-Goog-Credential%3Dgcp-kaggle-com%2540kaggle-161607.iam.gserviceaccount.com%252F20240424%252Fauto%252Fstorage%252Fgoog4_request%26X-Goog-Date%3D20240424T091451Z%26X-Goog-Expires%3D259200%26X-Goog-SignedHeaders%3Dhost%26X-Goog-Signature%3D65f4673eb6d15271ff109b854fd1499655455c5dfcd95b93d8eafdf32ba72e1ce1667ea9a6dd487e56d3575cbf16b562d445b9bd41246d66555106a69dae98594b193edc7d1a96ac3e60162e3032bb544085a95633c85b6ed7f98759fd40eeb6716f7ff79fc7a57f95c8098b975786232032549082fa8c4b5f1b06c0f2ad25b32fbd47c04f6b684892ad1c07fcca25d6a8e6121b2683bb0d2ba1b3fe944f5290d8f1b331beac989eef313c9e74cc81d2f6544c8b19b6419dc07a9454e02fdede9397a40ab5f3d74c1e190da43841f44ba733708b799112b63d5c51b8432de44863eb2754d3439d0ef5719d29d445b07c1463792bbabc76012c06754dfbdd0d64'
 
-# os.environ["CUDA_VISIBLE_DEVICES"] = ""
+# KAGGLE_INPUT_PATH='/kaggle/input'
+# KAGGLE_WORKING_PATH='/kaggle/working'
+# KAGGLE_SYMLINK='kaggle'
 
+# # !umount /kaggle/input/ 2> /dev/null
+# shutil.rmtree('/kaggle/input', ignore_errors=True)
+# os.makedirs(KAGGLE_INPUT_PATH, 0o777, exist_ok=True)
+# os.makedirs(KAGGLE_WORKING_PATH, 0o777, exist_ok=True)
+
+# try:
+#   os.symlink(KAGGLE_INPUT_PATH, os.path.join("..", 'input'), target_is_directory=True)
+# except FileExistsError:
+#   pass
+# try:
+#   os.symlink(KAGGLE_WORKING_PATH, os.path.join("..", 'working'), target_is_directory=True)
+# except FileExistsError:
+#   pass
+
+# for data_source_mapping in DATA_SOURCE_MAPPING.split(','):
+#     directory, download_url_encoded = data_source_mapping.split(':')
+#     download_url = unquote(download_url_encoded)
+#     filename = urlparse(download_url).path
+#     destination_path = os.path.join(KAGGLE_INPUT_PATH, directory)
+#     try:
+#         with urlopen(download_url) as fileres, NamedTemporaryFile() as tfile:
+#             total_length = fileres.headers['content-length']
+#             print(f'Downloading {directory}, {total_length} bytes compressed')
+#             dl = 0
+#             data = fileres.read(CHUNK_SIZE)
+#             while len(data) > 0:
+#                 dl += len(data)
+#                 tfile.write(data)
+#                 done = int(50 * dl / int(total_length))
+#                 sys.stdout.write(f"\r[{'=' * done}{' ' * (50-done)}] {dl} bytes downloaded")
+#                 sys.stdout.flush()
+#                 data = fileres.read(CHUNK_SIZE)
+#             if filename.endswith('.zip'):
+#               with ZipFile(tfile) as zfile:
+#                 zfile.extractall(destination_path)
+#             else:
+#               with tarfile.open(tfile.name) as tarfile:
+#                 tarfile.extractall(destination_path)
+#             print(f'\nDownloaded and uncompressed: {directory}')
+#     except HTTPError as e:
+#         print(f'Failed to load (likely expired) {download_url} to path {destination_path}')
+#         continue
+#     except OSError as e:
+#         print(f'Failed to load {download_url} to path {destination_path}')
+#         continue
+
+print('Data source import complete.')
+
+"""# **VisionGPT-2 Image Captioning Model**
+---
+
+- *almost* built from scratch.
+- pretrained weights loading via HF & timm
+- dataset preparation from scratch as well.
+
+# Imports
+---
+"""
 
 import torch
 import torch.nn as nn
@@ -26,9 +104,10 @@ from albumentations.pytorch import ToTensorV2
 from PIL import Image
 from pathlib import Path
 from sklearn.model_selection import train_test_split
+from torch.cuda.amp import GradScaler, autocast
+from tqdm.auto import tqdm
 import gc
-from vis import get_img_attention
-import matplotlib.pyplot as plt
+import json
 
 # Commented out IPython magic to ensure Python compatibility.
 # %env TOKENIZERS_PARALLELISM = false
@@ -140,23 +219,23 @@ class Dataset:
 #####VizWiz
 
 
-# base_path = Path('/storage/arya/test/clip-gpt-captioning/src/data/dataset/test_dataset/images')
-# df = pd.read_csv('/storage/arya/test/clip-gpt-captioning/src/data/dataset/test_dataset/viz_data.csv',delimiter='|')
-# df.rename({'image_name':'image','comment': 'caption'},inplace=True,axis=1)
-# df['image'] = df['image'].map(lambda x:base_path / x.strip())
-# df['caption'] = df['caption'].map(lambda x: str(x).strip().lower())
-# df.head()
+base_path = Path('/storage/arya/test/clip-gpt-captioning/src/data/dataset/test_dataset/images')
+df = pd.read_csv('/storage/arya/test/clip-gpt-captioning/src/data/dataset/test_dataset/viz_data.csv',delimiter='|')
+df.rename({'image_name':'image','comment': 'caption'},inplace=True,axis=1)
+df['image'] = df['image'].map(lambda x:base_path / x.strip())
+df['caption'] = df['caption'].map(lambda x: str(x).strip().lower())
+df.head()
 
 
 
 
-# train_df, val_df = train_test_split(df,test_size=0.1)
-# train_df.reset_index(drop=True,inplace=True)
-# val_df.reset_index(drop=True,inplace=True)
-# print(len(train_df),len(val_df))
+train_df, val_df = train_test_split(df,test_size=0.1)
+train_df.reset_index(drop=True,inplace=True)
+val_df.reset_index(drop=True,inplace=True)
+print(len(train_df),len(val_df))
 
-# train_ds = Dataset(train_df,train_tfms)
-# val_ds = Dataset(val_df,valid_tfms)
+train_ds = Dataset(train_df,train_tfms)
+val_ds = Dataset(val_df,valid_tfms)
 
 """## Custom collate function
 ---
@@ -193,10 +272,10 @@ def collate_fn(batch):
 - in GPT models, the pad tokens are same as the eos tokens, hence we also mask the pad tokens in the labels with -100 which are ignored by cross-entropy loss' default behaviour -- check `collate_fn` to see how I masked them.
 """
 
-# dl = torch.utils.data.DataLoader(train_ds,shuffle=True,batch_size=2,collate_fn=collate_fn)
-# _,c,l = next(iter(dl))
-# print(c[0])
-# print(l[0])
+dl = torch.utils.data.DataLoader(train_ds,shuffle=True,batch_size=2,collate_fn=collate_fn)
+_,c,l = next(iter(dl))
+print(c[0])
+print(l[0])
 
 """# Model
 ---
@@ -478,7 +557,7 @@ class VisionGPT2Model(nn.Module):
         return model
 
     def forward(self,image,input_ids,labels=None):
-        orginal_img = image
+
         image = self.patch_embed(image)
         image = self._pos_embed(image)
 
@@ -489,26 +568,9 @@ class VisionGPT2Model(nn.Module):
 
         for i in range(self.config.depth):
             image = self.blocks[i](image)
-            input_ids = self.transformer.h[i](input_ids, image) # [1,1,768]
+            input_ids = self.transformer.h[i](input_ids, image)
 
         input_ids = self.transformer.ln_f(input_ids)
-        
-        img_norm, img_attn = get_img_attention(orginal_img, input_ids)
-
-        fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-        axes[0].imshow(np.transpose(img_norm, (1, 2, 0)))  # Assuming img_norm is in (C, H, W) format
-        axes[0].set_title('Original Image')
-        axes[0].axis('off')
-
-        axes[1].imshow(np.transpose(img_attn, (1, 2, 0)))  # Assuming img_attn is in (H, W) format
-        axes[1].set_title('Image with Attention')
-        axes[1].axis('off')
-
-        # Save the plot
-        plt.savefig('image_with_attention.png', bbox_inches='tight')
-        plt.show()
-
-    
 
         if labels is not None:
             lm_logits = self.lm_head(input_ids)
@@ -533,26 +595,54 @@ class VisionGPT2Model(nn.Module):
 
         return sequence.cpu().flatten()
 
-"""
+"""# Training
+---
+- the pretrained layers are initially frozen as I need to train the cross attention layers first
+- in the following epochs, GPT2 is unfreezed and trained, in the final few epochs, the ViT is unfreezed as well.
+- optimizer: Adam
+- scheduler: OneCycleLR
+- mixed-precision fp16 training with autocast and grad-scaler in torch
+- metrics: cross-entropy loss and perplexity = e^loss, both lower the better
+- best model is saved based on validation perplexity and the same is loaded while generating captions.
 
 ### Generation
 
 - GPT2 generally requires context before generating anything, since for image captioning we can't really provide an initial context except the image itself, the initial context we provide to GPT is just `[50256]` i.e `<|endoftext|>` which is also the beginning of sentence token in GPT. For other models such as OPT it is `</s>`. This one token acts as the initial context.
 """
 
-class VisionGPT_Infer:
-    def __init__(self,model_config, model_path, device):
+class Trainer:
+    def __init__(self,model_config,train_config, dls):
+
+        self.train_config = train_config
         self.model_config = model_config
-        self.model_path = model_path
-        self.device = device
+        self.device = self.train_config.device
 
         self.model = VisionGPT2Model.from_pretrained(model_config).to(self.device)
         self.model.pretrained_layers_trainable(trainable=False)
 
+        print(f'trainable parameters: {sum([p.numel() for p in self.model.parameters() if p.requires_grad])}')
 
         self.tokenizer = GPT2TokenizerFast.from_pretrained('gpt2')
         self.tokenizer.pad_token = self.tokenizer.eos_token
 
+        self.scaler = GradScaler()
+
+        self.train_dl, self.val_dl = dls
+
+        total_steps = len(self.train_dl)
+
+        self.optim = torch.optim.Adam(self.model.parameters(), lr=self.train_config.lr / 25.)
+        self.sched = torch.optim.lr_scheduler.OneCycleLR(
+            self.optim,
+            max_lr=self.train_config.lr,
+            epochs=self.train_config.epochs,
+            steps_per_epoch=total_steps
+        )
+
+#         self.sched = get_linear_schedule_with_warmup(self.optim,num_warmup_steps=0,num_training_steps=total_steps)
+
+        self.metrics = pd.DataFrame()
+        self.metrics[['train_loss','train_perplexity','val_loss','val_perplexity']] = None
 
         self.gen_tfms = A.Compose([
             A.Resize(224,224),
@@ -561,19 +651,129 @@ class VisionGPT_Infer:
         ])
 
 
-    def load_model(self):
-        sd = torch.load(self.model_path, map_location= self.device)
+    def save_model(self,):
+        self.train_config.model_path.mkdir(exist_ok=True)
+        sd = self.model.state_dict()
+        torch.save(sd,self.train_config.model_path/'captioner.pt')
+
+
+    def load_best_model(self):
+        sd = torch.load(self.train_config.model_path/'captioner.pt')
         self.model.load_state_dict(sd)
-        self.model.eval()
+
+
+    def train_one_epoch(self,epoch):
+
+        prog = tqdm(self.train_dl,total=len(self.train_dl))
+
+        running_loss = 0.
+
+        for image, input_ids, labels in prog:
+
+            with autocast():
+                image = image.to(self.device)
+                input_ids = input_ids.to(self.device)
+                labels = labels.to(self.device)
+
+                loss = self.model(image,input_ids,labels)
+
+                self.scaler.scale(loss).backward()
+                self.scaler.step(self.optim)
+                self.scaler.update()
+                self.sched.step()
+                self.optim.zero_grad(set_to_none=True)
+
+                running_loss += loss.item()
+
+                prog.set_description(f'train loss: {loss.item():.3f}')
+
+            del image, input_ids, labels, loss
+
+        train_loss = running_loss / len(self.train_dl)
+        train_pxp = np.exp(train_loss)
+
+        self.metrics.loc[epoch,['train_loss','train_perplexity']] = (train_loss,train_pxp)
+
+
+    @torch.no_grad()
+    def valid_one_epoch(self,epoch):
+
+        prog = tqdm(self.val_dl,total=len(self.val_dl))
+
+        running_loss = 0.
+
+        for image, input_ids, labels in prog:
+
+            with autocast():
+                image = image.to(self.device)
+                input_ids = input_ids.to(self.device)
+                labels = labels.to(self.device)
+
+                loss = self.model(image,input_ids,labels)
+                running_loss += loss.item()
+
+                prog.set_description(f'valid loss: {loss.item():.3f}')
+
+            del image, input_ids, labels, loss
+
+        val_loss = running_loss / len(self.val_dl)
+        val_pxp = np.exp(val_loss)
+
+        self.metrics.loc[epoch,['val_loss','val_perplexity']] = (val_loss,val_pxp)
+
+        return val_pxp
+
 
     def clean(self):
         gc.collect()
         torch.cuda.empty_cache()
 
 
+    def fit(self,):
+
+        best_pxp = 1e9
+        best_epoch = -1
+        prog = tqdm(range(self.train_config.epochs))
+
+        for epoch in prog:
+
+            if epoch == self.train_config.freeze_epochs_gpt:
+                self.model.unfreeze_gpt_layers()
+                print('unfreezing GPT2 entirely...')
+
+            if epoch == self.train_config.freeze_epochs_all:
+                self.model.pretrained_layers_trainable(trainable=True)
+
+            self.model.train()
+            prog.set_description('training')
+            self.train_one_epoch(epoch)
+            self.clean()
+
+            self.model.eval()
+            prog.set_description('validating')
+            pxp = self.valid_one_epoch(epoch)
+            self.clean()
+
+            print(self.metrics.tail(1))
+
+            if pxp < best_pxp:
+                best_pxp = pxp
+                best_epoch = epoch
+                print('saving best model...')
+                self.save_model()
+
+        return {
+            'best_perplexity': best_pxp,
+            'best_epoch': best_epoch
+        }
+
+
     @torch.no_grad()
     def generate_caption(self,image,max_tokens=50,temperature=1.0,deterministic=False):
-        # image = Image.open(image).convert('RGB')
+
+        self.model.eval()
+
+        image = Image.open(image).convert('RGB')
         image = np.array(image)
         image = self.gen_tfms(image=image)['image']
         image = image.unsqueeze(0).to(self.device)
@@ -590,36 +790,71 @@ class VisionGPT_Infer:
 
         return caption
 
+model_config = SimpleNamespace(
+    vocab_size = 50_257,
+    embed_dim = 768,
+    num_heads = 12,
+    seq_len = 1024,
+    depth = 12,
+    attention_dropout = 0.1,
+    residual_dropout = 0.1,
+    mlp_ratio = 4,
+    mlp_dropout = 0.1,
+    emb_dropout = 0.1,
+)
+train_config = SimpleNamespace(
+    epochs = 5,
+    freeze_epochs_gpt = 1,
+    freeze_epochs_all = 2,
+    lr = 1e-4,
+    device = 'cuda',
+    model_path = Path('/storage/abhishek/Projects/vision_gpt2/captioner'),
+    batch_size = 64
+)
 
+train_dl = torch.utils.data.DataLoader(train_ds,batch_size=train_config.batch_size,shuffle=True,pin_memory=True,num_workers=2,persistent_workers=True,collate_fn=collate_fn)
+val_dl = torch.utils.data.DataLoader(val_ds,batch_size=train_config.batch_size,shuffle=False,pin_memory=True,num_workers=2,persistent_workers=True,collate_fn=collate_fn)
 
-def create_vision_gpt_model(model_path):
+trainer = Trainer(model_config,train_config,(train_dl,val_dl))
 
-    MODEL_CONFIG = SimpleNamespace(
-        vocab_size = 50_257,
-        embed_dim = 768,
-        num_heads = 12,
-        seq_len = 1024,
-        depth = 12,
-        attention_dropout = 0.1,
-        residual_dropout = 0.1,
-        mlp_ratio = 4,
-        mlp_dropout = 0.1,
-        emb_dropout = 0.1,
-    )
+# trainer.fit()
 
-    DEVICE = "cuda"
+"""# Results
+---
+# """
 
-    MODEL_PATH = model_path
+# trainer.metrics
 
-    vision_gpt = VisionGPT_Infer(
-    model_config = MODEL_CONFIG,
-    model_path = MODEL_PATH,
-    device = DEVICE
-    )
+# plt.plot(trainer.metrics['train_loss'],color='red',label='train loss')
+# plt.plot(trainer.metrics['val_loss'],color='orange',label='valid loss')
+# plt.title('loss, lower=better')
+# plt.legend()
+# plt.savefig(f'plots/trainLoss_vs_valLoss.jpg')
 
-    vision_gpt.load_model()
+# plt.plot(trainer.metrics['train_perplexity'],color='blue',label='train perplexity')
+# plt.plot(trainer.metrics['val_perplexity'],color='lightblue',label='valid perplexity')
+# plt.title('perplexity, lower=better')
+# plt.legend()
+# plt.savefig(f'plots/train_vs_perplexity.jpg')
 
-    return vision_gpt
+# """# Predictions
+# ---
+# """
+
+trainer.load_best_model()
+
+for i in range(50):
+    det = False
+    test = val_df.sample(n=1).values[0]
+    test_img, test_caption = test[0],test[1]
+    plt.imshow(Image.open(test_img).convert('RGB'))
+    t = np.random.uniform(0.5,1.5)
+    if i > 40:
+        det = True
+    gen_caption = trainer.generate_caption(test_img,temperature=t,deterministic=det)
+    plt.title(f"actual: {test_caption}\nmodel: {gen_caption}\ntemp: {t} deterministic generation: {det}")
+    plt.axis('off')
+    plt.savefig(f'plots/pred_img/pred_vs_gen_cap_{i}.jpg')
 
 
 
